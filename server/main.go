@@ -9,38 +9,13 @@ import (
 	"os"
 )
 
-
-
-
-
-
-
-
-
 func handleConnection(conn net.Conn) {
-	//fmt.Print(".")
-	//for {
-	//	netData, err := bufio.NewReader(c).ReadString('\n')
-	//	if err != nil {
-	//		fmt.Println(err)
-	//		return
-	//	}
-	//
-	//	temp := strings.TrimSpace(string(netData))
-	//	if temp == "STOP" {
-	//		break
-	//	}
-	//	fmt.Println(temp)
-	//	counter := strconv.Itoa(count) + "\n"
-	//	c.Write([]byte(string(counter)))
-	//}
-	//c.Close()
+
 
 	jsonrpc.ServeConn(conn)
 
 
 }
-
 
 func main() {
 	arguments := os.Args
@@ -57,8 +32,7 @@ func main() {
 	defer l.Close()
 
 
-	listener := new(Listener)
-
+	listener := Init()
 	rpc.Register(listener)
 
 	for {

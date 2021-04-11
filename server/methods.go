@@ -5,12 +5,19 @@ import (
 	"strings"
 )
 
-type Listener int
+type Listener struct {
+	clients map[string]int64
+}
 
 type Reply struct {
 	Data bool
 
 }
+
+func Init() *Listener{
+	return &Listener{clients: make(map[string]int64)}
+}
+
 
 func (l *Listener) Authorise(user string, reply *interface{}) error {
 	//get user credentials
@@ -27,4 +34,15 @@ func (l *Listener) Authorise(user string, reply *interface{}) error {
 
 	return nil
 }
+
+
+func (l *Listener) Iam(iam map[string]int64, reply *interface{}) error {
+	//get iam data
+	fmt.Printf("IAM: iam  add for user:%v\n ", iam)
+	//add to the array of user credentials
+	l.clients = iam
+	*reply = Reply{true}
+	return nil
+}
+
 //authorise raynard ioj
