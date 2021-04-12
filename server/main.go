@@ -1,54 +1,29 @@
 package main
 
 import (
-	"fmt"
+	"bufio"
 	"log"
+	"luxormining/server/db"
 	"net"
 	"net/rpc"
-	"net/rpc/jsonrpc"
 	"os"
+	_ "time"
 )
 
 
 
-
-
-
-
-
-
-func handleConnection(conn net.Conn) {
-	//fmt.Print(".")
-	//for {
-	//	netData, err := bufio.NewReader(c).ReadString('\n')
-	//	if err != nil {
-	//		fmt.Println(err)
-	//		return
-	//	}
-	//
-	//	temp := strings.TrimSpace(string(netData))
-	//	if temp == "STOP" {
-	//		break
-	//	}
-	//	fmt.Println(temp)
-	//	counter := strconv.Itoa(count) + "\n"
-	//	c.Write([]byte(string(counter)))
-	//}
-	//c.Close()
-
-	jsonrpc.ServeConn(conn)
-
-
-}
-
-
 func main() {
 	arguments := os.Args
+	var PORT string
 	if len(arguments) == 1 {
-		fmt.Println("Please provide a port number!")
+		//fmt.Println("Please provide a port number!")
+		PORT = ":8080"
 		return
+	}else {
+		PORT = ":" + arguments[1]
 	}
-	PORT := ":" + arguments[1]
+
+
 	l, err := net.Listen("tcp", PORT)
 
 	if err != nil {
@@ -56,13 +31,39 @@ func main() {
 	}
 	defer l.Close()
 
-
-	listener := new(Listener)
-
-	rpc.Register(listener)
+	//initializing server connections
+	mining := Init()
+	defer mining.DB.Db.Close()
+	var rq []db.AuthorizationRequest
+	mining.DB.FindAll(&rq)
+	for _,v := range rq{
+		log.Println(v)
+	}
+	//log.Println(&rq)
+	rpc.Register(mining)
 
 	for {
 		conn, err := l.Accept()
+		//save every connected miner
+		var R *interface{}
+		mining.CreateClient(&conn, R)
+		go func() {
+			for {
+			//read from stdin
+			reader := bufio.NewReader(os.Stdin)
+			line, _, err := reader.ReadLine()
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Println("line", line)
+			err = Write(conn, string(line))
+				if err != nil {
+					log.Fatal(err)
+				}
+		}
+		}()
+
+
 		if err != nil {
 			continue
 		}

@@ -1,0 +1,19 @@
+version: "3.7"
+
+services:
+  postgres:
+    image: postgres:9.6
+    volumes:
+      - ./etc/postgres:/docker-entrypoint-initdb.d:z
+    ports:
+      - "5432:5432"
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_USER: luxor
+      POSTGRES_PASSWORD: luxor
+      POSTGRES_DB: luxor
+    restart: on-failure
+  docker-host:
+    image: qoomon/docker-host:2.3.0
+    cap_add: [ 'NET_ADMIN', 'NET_RAW' ]
