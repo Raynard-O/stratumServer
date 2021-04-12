@@ -9,7 +9,7 @@ import (
 )
 
 
-
+// Mining server details
 type Mining struct {
 	m       sync.Mutex
 	clients map[int64]*clients
@@ -21,12 +21,12 @@ type Reply struct {
 }
 
 
-
+// Init initializing Mining server object
 func Init() *Mining{
 	//database initialise
 	Db, err := db.Connect()
 
-
+	//auto migrate the needed tables
 	Db.Db.AutoMigrate(&db.AuthorizationRequest{})
 	Db.Db.AutoMigrate(&db.SubscriptionRequest{})
 
@@ -41,7 +41,7 @@ func Init() *Mining{
 		}
 }
 
-
+// Authorise authroises a client
 func (m *Mining) Authorise(user map[string]interface{}, reply *interface{}) error {
 	//get user credentials
 	//s := strings.Split(user, " ")
@@ -115,11 +115,7 @@ func (m *Mining) Subscribe(Ext1 string, reply *interface{}) error {
 	return nil
 }
 
-
-
-
-
-
+// Notify broadcasts to all client connected to the server.
 func (m *Mining) Notify(Ext1 string, reply *interface{}) error {
 	//create random jobs
 	randomJobs := db.SubscriptionRequest{
@@ -130,11 +126,17 @@ func (m *Mining) Notify(Ext1 string, reply *interface{}) error {
 		CreatedAt:       time.Now().UTC().Local().String(),
 		CompletedAt: "",
 	}
+
+	for _,v := range m.clients{
+		err := Write(*v.conn, "")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 	fmt.Println(randomJobs)
 	//notify all connected miners of new job
-
 
 	return nil
 }
 
-//authorise raynard ioj
+
