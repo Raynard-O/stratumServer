@@ -33,8 +33,10 @@ func main() {
 	defer mining.DB.Db.Close()
 	var rq []db.AuthorizationRequest
 	mining.DB.FindAll(&rq)
-
-	log.Println(&rq)
+	for _,v := range rq{
+		log.Println(v)
+	}
+	//log.Println(&rq)
 	rpc.Register(mining)
 
 	for {

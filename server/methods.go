@@ -28,6 +28,7 @@ func Init() *Mining{
 
 
 	Db.Db.AutoMigrate(&db.AuthorizationRequest{})
+	Db.Db.AutoMigrate(&db.SubscriptionRequest{})
 
 	if err != nil {
 		log.Fatal(err)
@@ -80,6 +81,7 @@ func (m *Mining) Iam(iam map[string]int64, reply *interface{}) error {
 
 
 func (m *Mining) Subscribe(Ext1 string, reply *interface{}) error {
+	rMap := make(map[string]*db.SubscriptionRequest)
 	sub := db.SubscriptionRequest{
 		Extranonce1:     Ext1,
 	}
@@ -98,17 +100,22 @@ func (m *Mining) Subscribe(Ext1 string, reply *interface{}) error {
 		}
 		m.DB.Db.Create(&newSub)
 		fmt.Printf("work continued: Extranonce1:  %v\n ", newSub.Extranonce1)
-		*reply = Reply{true}
+		rMap["work"] = &newSub
+		*reply = rMap
 	}else {
 		//set updated_at to now
 		m.DB.Db.Model(&sub).Update("updated_at",time.Now().UTC().Local().String() )
 
 		fmt.Printf("work continued: Extranonce1:  %v\n ", sub.Extranonce1)
-		*reply = Reply{true}
+		rMap["work"] = &sub
+		*reply = rMap
+		//*reply = Reply{true}
 	}
 
 	return nil
 }
+
+
 
 
 

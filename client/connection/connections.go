@@ -6,71 +6,62 @@ import (
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/host"
 	"log"
-	"math/rand"
+	"luxormining/server/db"
 	"net"
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"os"
 	"strings"
-	"time"
 )
 
 
-
+//InterfaceConnection is the interface for client connections
 type InterfaceConnection interface {
 	Conn()
 	Close() error
-	//Call()
 	Listen()
 }
 
+//Connect holds the connection parameter
 type Connect struct {
 	client *rpc.Client
 	conn net.Conn
 	userData userAuthentifiedData
 }
+
+// userData is the client info
 type userAuthentifiedData struct {
 	iam int64
 	name	string
 }
 
-
+//Reply is the  structure of reply data from the server methods
 type Reply struct {
 	Data bool
-
 }
 
-type User struct {
-	name string
-	password string
-}
-
-
+//New creates a new interface connection
 func New()*Connect{
 	return &Connect{}
 }
-
+// Conn handles the connection to the server
 func (c *Connect) Conn() {
-
+	// Dial the server at localhost 8080
 	client , err := jsonrpc.Dial("tcp", "localhost:8080")
 	if err != nil {
 		fmt.Println(err)
 	}
+	// saves client connection
 	c.client = client
-
-
-
-	//defer l.Close()
-
 }
 
 // SysInfo saves the basic system information
 type SysInfo struct {
 	Hostname string `bson:hostname`
 	CPU      string `bson:cpu`
-
 }
 
+//systemSpec gets the machine's' details
 func systemSpec() *SysInfo{
 	hostStat, _ := host.Info()
 	cpuStat, _ := cpu.Info()
@@ -79,21 +70,20 @@ func systemSpec() *SysInfo{
 
 	info.Hostname = hostStat.Hostname
 	info.CPU = cpuStat[0].ModelName
-
-
 	return info
 }
 
-
-func (c *Connect) CallAuthorise(serverRequest []string){
+//CallAuthorise is used to authorise access of client to sever by systemSpec credentials
+func (c *Connect) CallAuthorise(){
 
 	var serverReply Reply
 	//get user credentials from Stdin
 	u := systemSpec()
+	//map system credentials for server identification
 	m := make(map[string]interface{})
 	m["hostname"]= u.Hostname
 	m["CPU"] = u.CPU
-	//user := serverRequest[1] + " " + serverRequest[2]
+
 	c.userData.name = u.Hostname
 	// sending credentials to server for authentication
 	fmt.Println(">>>> sending credentials>>")
@@ -106,39 +96,40 @@ func (c *Connect) CallAuthorise(serverRequest []string){
 	//get reply from server
 	fmt.Println(">>>> receiving  authorizations>>")
 	log.Printf("Reply: %v", serverReply)
-	// if credentials are true then allocate an iam credential for client
-	if serverReply.Data == true{
-		s1 := rand.NewSource(time.Now().UnixNano())
-		r1 := rand.New(s1)
-		c.userData.iam = r1.Int63()
-		m := make(map[string]int64)
-		m[c.userData.name] = c.userData.iam
-		err := c.client.Call("Mining.Iam", m, &serverReply)
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("Reply: %v", serverReply)
-	}
-
+	//// if credentials are true then allocate an iam credential for client
+	//if serverReply.Data == true{
+		//s1 := rand.NewSource(time.Now().UnixNano())
+		//r1 := rand.New(s1)
+		//c.userData.iam = r1.Int63()
+		//m := make(map[string]int64)
+		//m[c.userData.name] = c.userData.iam
+		//err := c.client.Call("Mining.Iam", m, &serverReply)
+		//if err != nil {
+		//	log.Fatal(err)
+		//}
+		//log.Printf("Reply: %v", serverReply)
 }
 
-func (c *Connect) Subscribe(Extranonce1 string)  {
 
-	var serverReply Reply
-	//m := make(map[string]string)
+// Subscribe is used to request a getwork from server or continue an existing work.
+func (c *Connect) Subscribe(Extranonce1 string)  {
+	// server repiles subscriptions with a map description of the job
+	var serverReply map[string]*db.SubscriptionRequest
+
 	// sending request to server for subscription
 	fmt.Println(">>>> sending request>>")
-	err := c.client.Call("Mining.Subscribe", Extranonce1, &serverReply)
 	//send a getwork notification to server  along with an Extranonce1 id if exists
+	err := c.client.Call("Mining.Subscribe", Extranonce1, &serverReply)
+
 	//server returns a work and keeps track of subscriptions
-	//(server first checks if Extranonce1 being received is done
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println(">>>> getting work response>>>")
-	log.Printf("Reply: %v", serverReply)
+	log.Printf("Reply: %v", serverReply["work"])
 }
 
+// Close connection to server
 func (c *Connect) Close() error {
 	return c.client.Close()
 }
@@ -151,16 +142,20 @@ func (c *Connect) Listen(){
 		reader := bufio.NewReader(os.Stdin)
 		line, _, err := reader.ReadLine()
 		if err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
 
 		serverRequest := strings.Split(string(line), " ")
 		//check method being called
 		switch serverRequest[0] {
 		case "authorise":
-			c.CallAuthorise(serverRequest)
+			c.CallAuthorise()
 		case "subscribe":
-			c.Subscribe(serverRequest[1])
+			if len(serverRequest) > 1{
+				c.Subscribe(serverRequest[1])
+			}else {
+				c.Subscribe("")
+			}
 		default:
 			fmt.Println("enter valid request (subscribe, authorise...")
 		}
