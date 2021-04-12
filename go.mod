@@ -4,6 +4,7 @@ go 1.15
 
 require (
 	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/jinzhu/gorm v1.9.16
 	github.com/jmoiron/sqlx v1.3.3
 	github.com/lib/pq v1.10.0
 	github.com/shirou/gopsutil v3.21.3+incompatible

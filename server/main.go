@@ -3,10 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
+	"luxormining/server/db"
 	"net"
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"os"
+	_ "time"
 )
 
 func handleConnection(conn net.Conn) {
@@ -33,7 +35,21 @@ func main() {
 	defer l.Close()
 
 
+
+
+
+	//req := db.Request{
+	//	Name: "user[].(string)",
+	//	CPU:        "user[11122].(string)",
+	//	RequestedAt: time.Now().UTC().Local().String(),
+	//}
+
 	listener := Init()
+	defer listener.DB.Db.Close()
+	var rq []db.Request
+	listener.DB.FindAll(&rq)
+
+	log.Println(&rq)
 	rpc.Register(listener)
 
 	for {
