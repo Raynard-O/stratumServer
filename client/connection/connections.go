@@ -57,8 +57,8 @@ func (c *Connect) Conn() {
 
 // SysInfo saves the basic system information
 type SysInfo struct {
-	Hostname string `bson:hostname`
-	CPU      string `bson:cpu`
+	Hostname string
+	CPU      string
 }
 
 //systemSpec gets the machine's' details
