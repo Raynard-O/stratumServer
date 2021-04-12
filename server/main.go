@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"luxormining/server/db"
 	"net"
@@ -15,11 +14,15 @@ import (
 
 func main() {
 	arguments := os.Args
+	var PORT string
 	if len(arguments) == 1 {
-		fmt.Println("Please provide a port number!")
+		//fmt.Println("Please provide a port number!")
+		PORT = ":8080"
 		return
+	}else {
+		PORT = ":" + arguments[1]
 	}
-	PORT := ":" + arguments[1]
+
 
 	l, err := net.Listen("tcp", PORT)
 
