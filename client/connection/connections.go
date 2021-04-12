@@ -57,6 +57,11 @@ func (c *Connect) Conn() {
 		fmt.Println(err)
 	}
 	c.client = client
+
+
+
+	//defer l.Close()
+
 }
 
 // SysInfo saves the basic system information
@@ -141,6 +146,7 @@ func (c *Connect) Close() error {
 func (c *Connect) Listen(){
 
 	for {
+
 		//read from stdin
 		reader := bufio.NewReader(os.Stdin)
 		line, _, err := reader.ReadLine()
@@ -158,7 +164,6 @@ func (c *Connect) Listen(){
 		default:
 			fmt.Println("enter valid request (subscribe, authorise...")
 		}
-
 	}
 
 }

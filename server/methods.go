@@ -114,7 +114,19 @@ func (m *Mining) Subscribe(Ext1 string, reply *interface{}) error {
 
 
 func (m *Mining) Notify(Ext1 string, reply *interface{}) error {
-	//notify all connected miners
+	//create random jobs
+	randomJobs := db.SubscriptionRequest{
+
+		Extranonce1:     randomHex(20),
+		Extranonce2Size: 4,
+		UpdatedAt:       time.Now().UTC().Local().String(),
+		CreatedAt:       time.Now().UTC().Local().String(),
+		CompletedAt: "",
+	}
+	fmt.Println(randomJobs)
+	//notify all connected miners of new job
+
+
 	return nil
 }
 
