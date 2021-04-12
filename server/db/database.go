@@ -41,22 +41,22 @@ func Connect() (*DB, error) {
 
 
 
-//func (db *DB) Insert(req Request){
+//func (db *DB) Insert(req AuthorizationRequest){
 //	fmt.Println(&req)
 //	db.Db.Create(&req)
-//	var re []Request
+//	var re []AuthorizationRequest
 //	db.Db.Find(&re)
 //	fmt.Println(re)
 //}
 
 
-func (db *DB) Insert(req Request){
+func (db *DB) Insert(req AuthorizationRequest){
 	fmt.Println(&req)
 	db.Db.Create(&req)
 
 }
 
-func (db *DB) FindAll(req *[]Request){
+func (db *DB) FindAll(req *[]AuthorizationRequest){
 	db.Db.Find(&req)
 }
 

@@ -93,7 +93,7 @@ func (c *Connect) CallAuthorise(serverRequest []string){
 	// sending credentials to server for authentication
 	fmt.Println(">>>> sending credentials>>")
 
-	err := c.client.Call("Listener.Authorise", m, &serverReply)
+	err := c.client.Call("Mining.Authorise", m, &serverReply)
 
 	if err != nil {
 		log.Fatal(err)
@@ -108,7 +108,7 @@ func (c *Connect) CallAuthorise(serverRequest []string){
 		c.userData.iam = r1.Int63()
 		m := make(map[string]int64)
 		m[c.userData.name] = c.userData.iam
-		err := c.client.Call("Listener.Iam", m, &serverReply)
+		err := c.client.Call("Mining.Iam", m, &serverReply)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -117,6 +117,22 @@ func (c *Connect) CallAuthorise(serverRequest []string){
 
 }
 
+func (c *Connect) Subscribe(Extranonce1 string)  {
+
+	var serverReply Reply
+	//m := make(map[string]string)
+	// sending request to server for subscription
+	fmt.Println(">>>> sending request>>")
+	err := c.client.Call("Mining.Subscribe", Extranonce1, &serverReply)
+	//send a getwork notification to server  along with an Extranonce1 id if exists
+	//server returns a work and keeps track of subscriptions
+	//(server first checks if Extranonce1 being received is done
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(">>>> getting work response>>>")
+	log.Printf("Reply: %v", serverReply)
+}
 
 func (c *Connect) Close() error {
 	return c.client.Close()
@@ -132,18 +148,19 @@ func (c *Connect) Listen(){
 			log.Fatal(err)
 		}
 
-
 		serverRequest := strings.Split(string(line), " ")
 		//check method being called
 		switch serverRequest[0] {
 		case "authorise":
 			c.CallAuthorise(serverRequest)
 		case "subscribe":
-
+			c.Subscribe(serverRequest[1])
 		default:
-
+			fmt.Println("enter valid request (subscribe, authorise...")
 		}
 
 	}
 
 }
+
+

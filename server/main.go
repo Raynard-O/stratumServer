@@ -1,21 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"luxormining/server/db"
 	"net"
 	"net/rpc"
-	"net/rpc/jsonrpc"
 	"os"
 	_ "time"
 )
-
-func handleConnection(conn net.Conn) {
-	jsonrpc.ServeConn(conn)
-
-}
-
 
 
 
@@ -34,26 +28,37 @@ func main() {
 	}
 	defer l.Close()
 
-
-
-
-
-	//req := db.Request{
-	//	Name: "user[].(string)",
-	//	CPU:        "user[11122].(string)",
-	//	RequestedAt: time.Now().UTC().Local().String(),
-	//}
-
-	listener := Init()
-	defer listener.DB.Db.Close()
-	var rq []db.Request
-	listener.DB.FindAll(&rq)
+	//initializing server connections
+	mining := Init()
+	defer mining.DB.Db.Close()
+	var rq []db.AuthorizationRequest
+	mining.DB.FindAll(&rq)
 
 	log.Println(&rq)
-	rpc.Register(listener)
+	rpc.Register(mining)
 
 	for {
 		conn, err := l.Accept()
+		//save every connected miner
+		var R *interface{}
+		mining.CreateClient(&conn, R)
+		go func() {
+			for {
+			//read from stdin
+			reader := bufio.NewReader(os.Stdin)
+			line, _, err := reader.ReadLine()
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Println("line", line)
+			err = Write(conn, string(line))
+				if err != nil {
+					log.Fatal(err)
+				}
+		}
+		}()
+
+
 		if err != nil {
 			continue
 		}
