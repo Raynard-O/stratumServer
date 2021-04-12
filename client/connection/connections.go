@@ -3,12 +3,16 @@ package connection
 import (
 	"bufio"
 	"fmt"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/host"
 	"log"
+	"math/rand"
 	"net"
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"os"
 	"strings"
+	"time"
 )
 
 
@@ -23,7 +27,11 @@ type InterfaceConnection interface {
 type Connect struct {
 	client *rpc.Client
 	conn net.Conn
-
+	userData userAuthentifiedData
+}
+type userAuthentifiedData struct {
+	iam int64
+	name	string
 }
 
 
@@ -49,25 +57,64 @@ func (c *Connect) Conn() {
 		fmt.Println(err)
 	}
 	c.client = client
-	//c.conn = conn
 }
+
+// SysInfo saves the basic system information
+type SysInfo struct {
+	Hostname string `bson:hostname`
+	CPU      string `bson:cpu`
+
+}
+
+func systemSpec() *SysInfo{
+	hostStat, _ := host.Info()
+	cpuStat, _ := cpu.Info()
+
+	info := new(SysInfo)
+
+	info.Hostname = hostStat.Hostname
+	info.CPU = cpuStat[0].ModelName
+
+
+	return info
+}
+
 
 func (c *Connect) CallAuthorise(serverRequest []string){
 
 	var serverReply Reply
 	//get user credentials from Stdin
-	user := serverRequest[1] + " " + serverRequest[2]
+	u := systemSpec()
+	m := make(map[string]interface{})
+	m["hostname"]= u.Hostname
+	m["CPU"] = u.CPU
+	//user := serverRequest[1] + " " + serverRequest[2]
+	c.userData.name = u.Hostname
 	// sending credentials to server for authentication
 	fmt.Println(">>>> sending credentials>>")
 
-	err := c.client.Call("Listener.Authorise", user, &serverReply)
+	err := c.client.Call("Listener.Authorise", m, &serverReply)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 	//get reply from server
-	fmt.Println(">>>> receiving  credentials>>")
+	fmt.Println(">>>> receiving  authorizations>>")
 	log.Printf("Reply: %v", serverReply)
+	// if credentials are true then allocate an iam credential for client
+	if serverReply.Data == true{
+		s1 := rand.NewSource(time.Now().UnixNano())
+		r1 := rand.New(s1)
+		c.userData.iam = r1.Int63()
+		m := make(map[string]int64)
+		m[c.userData.name] = c.userData.iam
+		err := c.client.Call("Listener.Iam", m, &serverReply)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("Reply: %v", serverReply)
+	}
+
 }
 
 

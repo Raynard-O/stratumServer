@@ -2,35 +2,57 @@ package main
 
 import (
 	"fmt"
-	"strings"
+	"log"
+	"luxormining/server/db"
 )
+
+
 
 type Listener struct {
 	clients map[string]int64
+	DB *db.DB
 }
 
 type Reply struct {
 	Data bool
-
 }
+
+
 
 func Init() *Listener{
-	return &Listener{clients: make(map[string]int64)}
+	//database initialise
+	Db, err := db.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
+	//fmt.Println(systemSpec())
+	fmt.Println("system initializing ..... Done")
+	return &Listener{
+		clients: make(map[string]int64),
+		DB: Db,
+		}
 }
 
 
-func (l *Listener) Authorise(user string, reply *interface{}) error {
+func (l *Listener) Authorise(user map[string]interface{}, reply *interface{}) error {
 	//get user credentials
-	s := strings.Split(user, " ")
-	fmt.Printf("Authorise: name:%v password: %v :\n", s[0], s[1])
+	//s := strings.Split(user, " ")
+	log.Printf("%v:\n", user["hostname"])
+	log.Println("1 device(s) found:")
+	log.Printf("0 - %v :\n", user["CPU"])
+
 
 	//verify user credentials
-	if s[1] == s[1] {
-		*reply = Reply{true}
-	}else {
-		*reply = Reply{false}
-	}
+	//if s[1] == s[1] {
+	//save to db
+	//	fmt.Println(r)
 	//return verification bool
+	*reply = Reply{true}
+	log.Printf("Authorising...")
+	//}else {
+
+	//}
+
 
 	return nil
 }

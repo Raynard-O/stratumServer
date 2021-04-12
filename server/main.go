@@ -10,12 +10,12 @@ import (
 )
 
 func handleConnection(conn net.Conn) {
-
-
 	jsonrpc.ServeConn(conn)
 
-
 }
+
+
+
 
 func main() {
 	arguments := os.Args
@@ -24,6 +24,7 @@ func main() {
 		return
 	}
 	PORT := ":" + arguments[1]
+
 	l, err := net.Listen("tcp", PORT)
 
 	if err != nil {
